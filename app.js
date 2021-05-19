@@ -10,10 +10,12 @@ app.use(express.json());
 
 app.use('/todos', todoRoutes);
 
+app.use((error, req, res, next) => {
+    res.status(500).json({ message: error.message });
+});
+
 app.get('/', (req, res) => {
     res.json('Hello fucking world!');
 });
-
-// app.listen(3000, () => console.log('server is up & running!'));
 
 module.exports = app;
