@@ -11,4 +11,6 @@ router.get('/:todoId', todoController.getTodoById);
 
 router.put('/:todoId', todoController.updateTodo);
 
+router.delete('/:todoId', todoController.deleteById);
+
 module.exports = router;
