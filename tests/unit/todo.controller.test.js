@@ -7,13 +7,61 @@ const allTodos = require('../mock-data/all-todos.json');
 TodoModel.create = jest.fn();
 TodoModel.find = jest.fn();
 TodoModel.findById = jest.fn();
+TodoModel.findByIdAndUpdate = jest.fn();
 
 let req, res, next;
+const todoId = '60a5439bd657753548496682';
 
 beforeEach(() => {
 	req = httpMocks.createRequest();
 	res = httpMocks.createResponse();
 	next = jest.fn();
+});
+
+describe('TodoController.updateTodo', () => {
+	it('should have a updateTodo function', () => {
+		expect(typeof TodoController.updateTodo).toBe('function');
+	});
+
+	it('should update with TodoModel.findByIdAndUpdate', async () => {
+		req.params.todoId = todoId;
+		req.body = newTodo;
+		await TodoController.updateTodo(req, res, next);
+
+		expect(TodoModel.findByIdAndUpdate).toHaveBeenCalledWith(todoId, newTodo, { 
+			new: true, 
+			useFindAndModify: false
+		});
+	});
+
+	it('should return a response with JSON data and HTTP code 200', async () => {
+		req.params.todoId = todoId;
+		req.body = newTodo;
+		TodoModel.findByIdAndUpdate.mockReturnValue(newTodo);
+		await TodoController.updateTodo(req, res, next);
+
+		expect(res._isEndCalled()).toBeTruthy();
+		expect(res.statusCode).toBe(200);
+		expect(res._getJSONData()).toStrictEqual(newTodo);
+	});
+
+	it('should handle errors in updateTodo', async () => {
+		const errorMessage = { message: 'Error, something went wrong!' }
+		const rejectedPromise = Promise.reject(errorMessage);
+
+		TodoModel.findByIdAndUpdate.mockReturnValue(rejectedPromise);
+		await TodoController.updateTodo(req, res, next);
+
+		expect(next).toHaveBeenCalledWith(errorMessage);
+	});
+
+	it('should return 404 when item doesnt exist', async () => {
+		TodoModel.findByIdAndUpdate.mockReturnValue(null);
+		await TodoController.updateTodo(req, res, next);
+
+		expect(res.statusCode).toBe(404);
+		expect(res._isEndCalled()).toBeTruthy();
+	});
 });
 
 describe('TodoController.getTodoById', () => {
@@ -22,10 +70,10 @@ describe('TodoController.getTodoById', () => {
 	});
 
 	it('should call TodoModel.findById with route parameters', async () => {
-		req.params.todoId = '60a5439bd657753548496682';
+		req.params.todoId = todoId;
 		await TodoController.getTodoById(req, res, next);
 
-		expect(TodoModel.findById).toBeCalledWith('60a5439bd657753548496682');
+		expect(TodoModel.findById).toBeCalledWith(todoId);
 	});
 
 	it('should return JSON body and response code 200', async () => {
